@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dummy-go
+  labels:
+    app: dummy-go
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dummy-go
+  template:
+    metadata:
+      labels:
+        app: dummy-go
+    spec:
+      containers:
+        - name: dummy-go
+          image: rmnobarra/dummy-go:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dummy-go
+  labels:
+    app: dummy-go
+spec:
+  selector:
+    app: dummy-go
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: ClusterIP
